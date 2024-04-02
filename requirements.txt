@@ -3,7 +3,6 @@ pandas
 streamlit
 altair
 streamlit_tags
-io
 openpyxl
 yfinance
 matplotlib
