@@ -15,8 +15,14 @@ from heatmap import heatmap
 from line_chart import line_chart
 from create_xlsx import create_xlsx
 
+# streamlit page config
+st.set_page_config(
+    page_title="Stock Correlation Calculator",
+    layout="wide"
+)
+
 # Title
-st.title("Investment Price & Correlation Calculator")
+st.title("Stock Correlation Calculator")
 st.markdown("This app uses the Yahoo Finance API to query the daily stock price of the selected stocks within the date range.  \nThe data is then used to return the price chart and calculate the correlation between each selected stock.  \nYou can add or remove stocks, and amend the date range using the input boxs below.  \nPlease refer to Yahoo Fiance for the correct ticker references. ")
 
 # fields input
