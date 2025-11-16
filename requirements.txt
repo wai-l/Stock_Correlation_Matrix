@@ -6,3 +6,4 @@ streamlit_tags
 openpyxl
 yfinance
 matplotlib
+numpy
