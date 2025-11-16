@@ -1,6 +1,7 @@
 # packages
 from datetime import date
 import pandas as pd
+import numpy as np
 import streamlit as st
 import altair as alt
 from streamlit_tags import st_tags
@@ -14,6 +15,7 @@ from corr_matrix import corr_matrix
 from heatmap import heatmap
 from line_chart import line_chart
 from create_xlsx import create_xlsx
+from data_transform import log_return
 
 # streamlit page config
 st.set_page_config(
@@ -73,7 +75,8 @@ st.caption(f"Time period: {start_date} to {end_date}")
 st.altair_chart(line_chart(closed_price_long), use_container_width=True)
 
 # Corelation matrix
-matrix = corr_matrix(closed_price_wide)
+daily_return = log_return(closed_price_wide)
+matrix = corr_matrix(daily_return)
 
 # Colored table for matrix
 

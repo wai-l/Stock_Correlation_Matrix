@@ -2,12 +2,12 @@ import yfinance as yf
 import pandas as pd
 import streamlit as st
 
-# def main():
-#     tickers = ["AAPL", "MSFT", "NVDA"]
-#     start_date = "2024-01-01"
-#     end_date = "2025-01-01"
+def main():
+    tickers = ["AAPL", "MSFT", "NVDA"]
+    start_date = "2024-01-01"
+    end_date = "2025-01-01"
 
-#     print(ticker_closed_price(tickers, start_date, end_date))
+    print(ticker_closed_price(tickers, start_date, end_date))
 
 
 
@@ -48,4 +48,6 @@ def ticker_closed_price(tickers, start_date, end_date):
         raise ValueError(f"An unexpected error has occured: {e}")
 
 
-# main()
+
+if __name__ == "__main__":
+    main()
