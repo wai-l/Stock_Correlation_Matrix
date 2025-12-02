@@ -10,10 +10,10 @@ def main():
     # df = pd.DataFrame(data)
 
     # read data
-    price = pd.read_csv('./testing/testing_stock_data.csv')
+    price = pd.read_csv('./testing/testing_stock_data_2.csv')
 
-    print(price['AAPL'].head())
-    print(price['AAPL'].shift(1).head())
+    # print(price['AAPL'].head())
+    # print(price['AAPL'].shift(1).head())
 
     # calculate price change
     ## return = ln(price(n)/price(n-1))
@@ -25,12 +25,12 @@ def main():
     # print(df.head())
     print(corr_matrix(df))
 
-    cols_to_review = ['VOO', 'AAPL', 'NVDA']
-    for col in cols_to_review:
-        col_mean = df[col].mean()
-        col_sum = df[col].sum()
+    # cols_to_review = ['VOO', 'AAPL', 'NVDA']
+    # for col in cols_to_review:
+    #     col_mean = df[col].mean()
+    #     col_sum = df[col].sum()
         
-        print(f"{col} mean: {col_mean}, sum: {col_sum}")
+    #     print(f"{col} mean: {col_mean}, sum: {col_sum}")
         
 
 
