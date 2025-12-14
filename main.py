@@ -16,6 +16,7 @@ from heatmap import heatmap
 from line_chart import line_chart
 from create_xlsx import create_xlsx
 from data_transform import log_return
+from metrics import asset_metrics, portfo_metrics
 
 # streamlit page config
 st.set_page_config(
@@ -28,7 +29,7 @@ st.title("Portfolio Correlation Calculator V2")
 # this need rewritten
 st.markdown("This app uses the Yahoo Finance API to query the daily price of the selected assets within the date range. The data is then used to return the price chart and calculate the correlation between each selected stock. You can add or remove stocks, and amend the date range using the input boxs below. Please refer to Yahoo Fiance for the correct ticker references. ")
 
-input_fields, portfo_summary = st.columns(2)
+input_fields, filler, portfo_summary = st.columns([9, 1, 9])
 
 with input_fields: 
 # fields input
@@ -63,7 +64,7 @@ with input_fields:
         }
     )
 
-    edited_df = st.data_editor(df, 
+    df_pending = st.data_editor(df, 
                             num_rows="dynamic", 
                             use_container_width=True, 
                             column_config={
@@ -82,6 +83,12 @@ with input_fields:
                             },
                             )
 
+
+    if st.button('Calculate', type='primary', ): 
+        edited_df = df_pending.copy()
+    else: 
+        edited_df = df.copy()
+
     tickers = edited_df['Tickers'].to_list()
 
     total_allocated = edited_df['Allocation Percentage'].sum()
@@ -93,39 +100,63 @@ with input_fields:
 with portfo_summary: 
     # api call and data cleaning
     closed_price_wide = ticker_closed_price(tickers, start_date, end_date)
+    log_return_df = log_return(closed_price_wide)
+    portfo_m = portfo_metrics(log_return_df, edited_df)
 
     # portfoliio metrics
     st.header('Portfolio Summary')
 
     col1, col2= st.columns(2)
-    col1.metric('Number of Assets', len(tickers), help='testing', )
-    col2.metric('Total Allocation', f"{total_allocated:.2f} %")
+    col1.metric('Number of Assets', len(tickers))
+    col2.metric('Total Allocation', f"{total_allocated:.2f}%")
 
-    col1, col2 = st.columns(2)
-    col1.metric('Expected Returns (Annualised)', f'{np.random.uniform(5, 15):.2f} %')
-    col2.metric('StdDev (Volatility σ)', f'{np.random.uniform(10, 30):.2f} %')
+    st.subheader('Annualised', help='Based on 252 trading days per year. ')
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric(
+        'Expected Return (μ)', 
+        f"{portfo_m['Expected Return (μ)']:.2%}"
+        )
+    col2.metric(
+        'StdDev (Volatility σ)', 
+        f"{portfo_m['StdDev (Volatility σ)']:.2%}"
+        )
+    col3.metric(
+        'Sharpe Ratio', 
+        f"{portfo_m['Sharpe Ratio']:.2f}", 
+        help='Assuming risk-free rate is 4.5%'
+        )
+    
+    st.subheader('Cumulative')
+    col1, col2, col3 = st.columns(3)
+    col1.metric(
+        'Max Drawdown', 
+        f"{portfo_m['Max Drawdown']:.2%}")
+    col2.metric(
+        'Cumulative Return', 
+        f"{portfo_m['Cumulative Return']:.2%}")
 
-    col1, col2 = st.columns(2)
-    col1.metric('Sharpe Ratio', f'{np.random.uniform(0.5, 2):.2f} ')
-    col2.metric('Max Drawdown', f'{np.random.uniform(5, 15):.2f} %')
 
-chart, corr_matrix_display = st.columns(2)
 
-with chart: 
-    # Closed Price Line Chart
-    closed_price_long = (
-        pd.melt(closed_price_wide,
-                id_vars = ["Date"],
-                value_vars = tickers,
-                var_name = "Ticker",
-                value_name = "Closed_price")
-        .sort_values(by="Date", ignore_index = True)
+asset_metrics_display, filler, corr_matrix_display = st.columns([9, 1, 9])
+
+with asset_metrics_display:  
+    st.header('Assets Metrics')
+    metrics_df = asset_metrics(log_return_df)
+    st.dataframe(
+        metrics_df.style.format({
+            'Annualised Return (μ)': '{:.2%}',
+            'StdDev (Volatility σ)': '{:.2%}',
+            'Cumulative Return': '{:.2%}',
+            'Observations': '{:,.0f}'
+        }),
+        column_config={
+            'Observations': st.column_config.NumberColumn(
+                'Observations',
+                help='Number of valid log-return observations for the asset'
+            )
+        }
     )
-
-
-    st.header("Closed Price")
-    st.caption(f"Time period: {start_date} to {end_date}")
-    st.altair_chart(line_chart(closed_price_long), use_container_width=True)
 
 with corr_matrix_display:
     # Corelation matrix
@@ -136,14 +167,30 @@ with corr_matrix_display:
 
     heatmap = heatmap(matrix)
 
-    st.header("Correlation Matrix")
+    st.header(
+        "Correlation Matrix", 
+        help="The correlation between stocks are caluclated using dates where price of all stocks are available. Dates with missing price are not used in the calculation. ")
     date_not_null = closed_price_wide.dropna()
     min = date_not_null['Date'].min().strftime("%Y-%m-%d")
     max = date_not_null['Date'].max().strftime("%Y-%m-%d")
 
-    st.caption(f"Date range for calculation: {min} to {max}  \n*The correlation between stocks are caluclated using dates where price of all stocks are available. Dates with missing price are not used in the calculation. ")
-
     st.table(heatmap)
+
+# Closed Price Line Chart
+closed_price_long = (
+    pd.melt(closed_price_wide,
+            id_vars = ["Date"],
+            value_vars = tickers,
+            var_name = "Ticker",
+            value_name = "Closed_price")
+    .sort_values(by="Date", ignore_index = True)
+)
+
+
+st.header("Closed Price")
+st.caption(f"Time period: {start_date} to {end_date}")
+st.altair_chart(line_chart(closed_price_long), use_container_width=True)
+
 
 # Data Export
 
