@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from datetime import date
 
-from stock_api import ticker_closed_price
-from data_transform import log_return
+from .stock_api import ticker_closed_price
+from .data_transform import log_return
 
 def main(): 
     # Example usage

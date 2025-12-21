@@ -2,12 +2,12 @@ import pandas as pd
 import io
 from openpyxl.styles import Font, Alignment, Border
 
-def create_xlsx(df1, df2):
+def xlsx_summary_report(price_history, corr_matrix):
     # the buffer is to let the excel file be the returning value of the function
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-        df1.to_excel(writer, sheet_name='price_history', index=False, header=True)
-        df2.to_excel(writer, sheet_name='correlation_matrix', index=True, header=True)
+        price_history.to_excel(writer, sheet_name='price_history', index=False, header=True)
+        corr_matrix.to_excel(writer, sheet_name='correlation_matrix', index=True, header=True)
         worksheet1 = writer.sheets['price_history']
         worksheet2 = writer.sheets['correlation_matrix']
 

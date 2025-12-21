@@ -1,5 +1,5 @@
 # packages
-from datetime import date
+from datetime import date, datetime
 import pandas as pd
 import numpy as np
 import streamlit as st
@@ -10,13 +10,13 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border
 
 # scripts
-from stock_api import ticker_closed_price
-from corr_matrix import corr_matrix
-from heatmap import heatmap
-from line_chart import line_chart
-from create_xlsx import create_xlsx
-from data_transform import log_return
-from metrics import asset_metrics, portfo_metrics
+from app_lib.stock_api import ticker_closed_price
+from app_lib.corr_matrix import corr_matrix
+from app_lib.heatmap import heatmap
+from app_lib.line_chart import line_chart
+from app_lib.xlsx_summary_report import xlsx_summary_report
+from app_lib.data_transform import log_return
+from app_lib.metrics import asset_metrics, portfo_metrics
 
 # streamlit page config
 st.set_page_config(
@@ -93,9 +93,28 @@ with input_fields:
 
     total_allocated = edited_df['Allocation Percentage'].sum()
 
-    if total_allocated > 100: 
-        st.error("The total allocation percentage exceeds 100%. Please adjust the values.")
+    errors = []
+
+    if total_allocated > 100:
+        errors.append(f"The total allocation percentage is {total_allocated:.2f}%. Please adjust the values so that they do not exceed 100%.")
+
+    if edited_df.empty:
+        errors.append("The portfolio is empty. Please add at least one asset.")
+
+    if (edited_df["Allocation Percentage"] < 0).any():
+        errors.append("Allocation percentages must be non-negative. Please correct the values.")
+
+    if len(edited_df["Tickers"]) != len(set(edited_df["Tickers"])):
+        errors.append("Duplicate tickers found in the portfolio. Please ensure all tickers are unique.")
+    
+    if edited_df["Tickers"].isnull().any() or edited_df["Tickers"].str.strip().eq("").any():
+        errors.append("Ticker symbols cannot be empty. Please provide valid ticker symbols.")
+
+    if errors:
+        for msg in errors:
+            st.error(msg)
         st.stop()
+
 
 with portfo_summary: 
     # api call and data cleaning
@@ -196,10 +215,13 @@ st.altair_chart(line_chart(closed_price_long), use_container_width=True)
 
 st.header("Download data as xlsx file")
 
+now = datetime.now()
+now = now.strftime("%Y%m%d_%H%M%S")
+
 if st.download_button(
         label = "Download",
-        data = create_xlsx(closed_price_wide, matrix),
-        file_name = "stock_data.xlsx"
+        data = xlsx_summary_report(closed_price_wide, matrix),
+        file_name = f'{now}_porfo_cor_cal_summary.xlsx'
         ):
     st.write("Thank you for downloading. ")
 
