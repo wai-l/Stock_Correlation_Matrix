@@ -15,7 +15,7 @@ from app_lib.corr_matrix import corr_matrix
 from app_lib.heatmap import heatmap
 from app_lib.line_chart import line_chart
 from app_lib.xlsx_summary_report import xlsx_summary_report
-from app_lib.data_transform import log_return
+from app_lib.data_transform import log_return, normalize_to_100
 from app_lib.metrics import asset_metrics, portfo_metrics
 
 # streamlit page config
@@ -24,6 +24,17 @@ st.set_page_config(
     layout="wide"
 )
 
+default_portfolio = pd.DataFrame({
+    "Tickers": ["AAPL", "TSLA", "BARC.L", "VOO", "QQQ", "GLD", "USDGBP=X"],
+    "Allocation Percentage": [15, 15, 10, 20, 20, 10, 10],
+})
+
+st.session_state.setdefault("applied_df", default_portfolio)
+st.session_state.setdefault("applied_start", date.today().replace(year=date.today().year - 1))
+st.session_state.setdefault("applied_end", date.today())
+st.session_state.setdefault("price_display_mode", "Price")
+
+
 # Title
 st.title("Portfolio Correlation Calculator V2")
 # this need rewritten
@@ -31,67 +42,69 @@ st.markdown("This app uses the Yahoo Finance API to query the daily price of the
 
 input_fields, filler, portfo_summary = st.columns([9, 1, 9])
 
-with input_fields: 
-# fields input
-    st.header("Select the date range and the assets: ")
-
-    start, end, filler = st.columns([1, 1, 2])
-
-    with start: 
-        st.text('Start Date: ')
-        start_date = st.date_input(
-            "Start Date: ",
-            date.today().replace(year = date.today().year-1),
-            max_value = date.today(),
-            format = "YYYY-MM-DD", 
-            label_visibility='collapsed')
-
-    with end: 
-        st.text('End Date: ')
-        end_date = st.date_input(
-            "End Date: ",
-            date.today(),
-            max_value = date.today(),
-            format = "YYYY-MM-DD", 
-            label_visibility='collapsed')
-
-    st.text('Portfolio allocation: ')
-
-    df = pd.DataFrame(
-        {
-            "Tickers": ['AAPL', 'TSLA', 'BARC.L', 'VOO', 'QQQ', 'GLD', 'USDGBP=X'],
-            "Allocation Percentage": [15, 15, 10, 20, 20, 10, 10]
-        }
-    )
-
-    df_pending = st.data_editor(df, 
-                            num_rows="dynamic", 
-                            use_container_width=True, 
-                            column_config={
-                                "Tickers": st.column_config.TextColumn(
-                                    "Tickers",
-                                    help="Enter the stock ticker symbol"
-                                ),
-                                "Allocation Percentage": st.column_config.NumberColumn(
-                                    "Allocation Percentage",
-                                    help="Enter the allocation percentage for each stock (up to 2 decimals)",
-                                    min_value=0,
-                                    max_value=100,
-                                    step=0.01, 
-                                    format='%.2f%%'
-                                )
-                            },
-                            )
 
 
-    if st.button('Calculate', type='primary', ): 
-        edited_df = df_pending.copy()
-    else: 
-        edited_df = df.copy()
+with input_fields:
+    st.header("Select the date range and the assets:")
 
-    tickers = edited_df['Tickers'].to_list()
+    with st.form("inputs_form", clear_on_submit=False):
+        start, end, _filler = st.columns([1, 1, 2])
 
-    total_allocated = edited_df['Allocation Percentage'].sum()
+
+        with start: 
+            start_date = st.date_input(
+                "Start Date",
+                value=st.session_state["applied_start"],
+                max_value=date.today(),
+                format="YYYY-MM-DD",
+            )
+
+        with end: 
+            end_date = st.date_input(
+                "End Date",
+                value=st.session_state["applied_end"],
+                max_value=date.today(),
+                format="YYYY-MM-DD",
+            )
+        
+        st.text("Portfolio Allocation (%)")
+        df_pending = st.data_editor(
+            st.session_state["applied_df"].reset_index(drop=True), 
+            num_rows="dynamic",
+            width="stretch",
+            hide_index=True, 
+            column_config={
+                "Tickers": st.column_config.TextColumn("Tickers"),
+                "Allocation Percentage": st.column_config.NumberColumn(
+                    "Allocation Percentage",
+                    min_value=0,
+                    max_value=100,
+                    step=0.01,
+                    format="%.2f%%",
+                ),
+            },
+        )
+        
+        submitted = st.form_submit_button("Calculate", type="primary")
+
+    if submitted:
+        # apply inputs once
+        st.session_state["applied_start"] = start_date
+        st.session_state["applied_end"] = end_date
+
+        applied = df_pending.dropna(how="all").reset_index(drop=True).copy()
+        applied["Tickers"] = applied["Tickers"].astype(str).str.strip()
+        applied["Allocation Percentage"] = pd.to_numeric(applied["Allocation Percentage"], errors="coerce")
+
+        st.session_state["applied_df"] = applied
+        st.rerun()
+
+    edited_df = st.session_state["applied_df"]
+    tickers = edited_df["Tickers"].tolist()
+    start_date = st.session_state["applied_start"]
+    end_date = st.session_state["applied_end"]
+
+    total_allocated = edited_df["Allocation Percentage"].sum()
 
     errors = []
 
@@ -106,15 +119,14 @@ with input_fields:
 
     if len(edited_df["Tickers"]) != len(set(edited_df["Tickers"])):
         errors.append("Duplicate tickers found in the portfolio. Please ensure all tickers are unique.")
-    
-    if edited_df["Tickers"].isnull().any() or edited_df["Tickers"].str.strip().eq("").any():
+
+    if edited_df["Tickers"].isnull().any() or edited_df["Tickers"].astype(str).str.strip().eq("").any():
         errors.append("Ticker symbols cannot be empty. Please provide valid ticker symbols.")
 
     if errors:
         for msg in errors:
             st.error(msg)
         st.stop()
-
 
 with portfo_summary: 
     # api call and data cleaning
@@ -195,9 +207,30 @@ with corr_matrix_display:
 
     st.table(heatmap)
 
+# Closed Price display (chart and table)
+## select for price/percentage change
+st.header("Closed Price by Assets and Date")
+st.caption(f"Time period: {start_date} to {end_date}")
+
+price_display_options = ['Price', 'Indexed']
+price_display_selection = st.segmented_control(
+    "Value", price_display_options, 
+    key='price_display_mode'
+)
+
+display_data = (
+    normalize_to_100(
+        df=closed_price_wide,
+        date_col="Date",
+        base=100.0
+    )
+    if st.session_state["price_display_mode"] == "Indexed"
+    else closed_price_wide
+)
+
 # Closed Price Line Chart
-closed_price_long = (
-    pd.melt(closed_price_wide,
+display_long = (
+    pd.melt(display_data,
             id_vars = ["Date"],
             value_vars = tickers,
             var_name = "Ticker",
@@ -206,10 +239,26 @@ closed_price_long = (
 )
 
 
-st.header("Closed Price")
-st.caption(f"Time period: {start_date} to {end_date}")
-st.altair_chart(line_chart(closed_price_long), use_container_width=True)
+st.caption(f'Index option base = 100 at first available price date for each asset.')
 
+st.subheader("Closed Price Chart")
+
+st.altair_chart(line_chart(display_long), width='stretch')
+
+st.subheader("Closed Price Data")
+# Closed Price Data Table
+## display closed price data
+### price as 2 decimal places
+### date as YYYY-MM-DD
+
+display_data["Date"] = display_data["Date"].dt.strftime("%Y-%m-%d")
+
+st.dataframe(
+    display_data.style.format(
+        {col: '{:.2f}' for col in display_data.columns if col != 'Date'}
+    ),
+    width='stretch'
+)
 
 # Data Export
 

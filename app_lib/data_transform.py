@@ -1,32 +1,25 @@
 import pandas as pd
 import numpy as np
 
-# def log_return(price_df: pd.DataFrame, date_col='Date') -> pd.DataFrame:
-#     """
-#     Calculate daily log returns from price data.
+from .stock_api import ticker_closed_price
 
-#     Parameters
-#     ----------
-#     price_df : pd.DataFrame
-#         DataFrame with a date column and price columns.
-#     date_col : str
-#         Name of the date column.
 
-#     Returns
-#     -------
-#     pd.DataFrame
-#         Log return DataFrame with same shape.
-#     """
-#     df = price_df.copy()
+def main(): 
+    tickers = ["AAPL", "MSFT", "NVDA", "BARC.L"]
+    start_date = "2025-01-09"
+    end_date = "2025-01-30"
 
-#     price_cols = [c for c in df.columns if c != date_col]
+    df = ticker_closed_price(tickers, start_date, end_date)
 
-#     # guard against non-positive prices
-#     df[price_cols] = df[price_cols].where(df[price_cols] > 0)
+    # --- create your normalised copy ---
+    closed_price_norm = normalize_to_100(df, date_col="Date", base=100)
 
-#     df[price_cols] = np.log(df[price_cols]).diff()
+    print('Raw')
+    print(df)
+    print('------------------')
+    print('Indexed')
+    print(closed_price_norm)
 
-#     return df
 
 def log_return(df: pd.DataFrame, date_col: str = "Date") -> pd.DataFrame:
     out = df.copy()
@@ -39,3 +32,33 @@ def log_return(df: pd.DataFrame, date_col: str = "Date") -> pd.DataFrame:
         out[c] = lr.reindex(out.index)
 
     return out
+
+def normalize_to_100(
+    df: pd.DataFrame,
+    date_col: str = "Date",
+    base: float = 100.0,
+    price_cols: list[str] | None = None
+    ) -> pd.DataFrame:
+    """
+    Normalise each price column to an index starting at `base` using
+    the first non-null price in that column within the dataframe.
+    """
+    out = df.copy()
+
+    # Identify price columns
+    if price_cols is None:
+        price_cols = [c for c in out.columns if c != date_col]
+
+    # Ensure numeric (Streamlit tables sometimes contain None objects)
+    out[price_cols] = out[price_cols].apply(pd.to_numeric, errors="coerce")
+
+    # First non-null value per column (base per ticker)
+    first_valid = out[price_cols].apply(lambda s: s.dropna().iloc[0] if s.notna().any() else np.nan)
+
+    # Normalise
+    out[price_cols] = out[price_cols].div(first_valid).mul(base)
+
+    return out
+
+if __name__ == "__main__":
+    main()
