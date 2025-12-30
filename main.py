@@ -17,6 +17,7 @@ from app_lib.line_chart import line_chart
 from app_lib.xlsx_summary_report import xlsx_summary_report
 from app_lib.data_transform import log_return, normalize_to_100
 from app_lib.metrics import asset_metrics, portfo_metrics
+from app_lib.streamlit_helper import highlight_total_row
 
 # streamlit page config
 st.set_page_config(
@@ -162,14 +163,24 @@ with portfo_summary:
     col1, col2, col3 = st.columns(3)
     col1.metric(
         'Max Drawdown', 
-        f"{portfo_m['Max Drawdown']:.2%}")
+        f"{portfo_m['Max Drawdown']:.2f}%")
     col2.metric(
         'Cumulative Return', 
         f"{portfo_m['Cumulative Return']:.2%}")
+    col3.metric(
+        'Cmumlative Return (Log)', 
+        f"{portfo_m['Cumulative Return (Log)']:.2%}")
 
+        # "Contribution (log)": cumulative_contrib_log,
+        # "Contribution": simple_contrib,
+        # "Contribution Share": contrib_share, 
 
+        # # for error check
+        # "Cumulative Return (Log)": cum_return_log, 
+        # "Cumulative Contribution (Log) Sum": cum_contrib_log_sum, 
+        # "Diff": cum_return_log - cum_contrib_log_sum
 
-asset_metrics_display, filler, corr_matrix_display = st.columns([9, 1, 9])
+asset_metrics_display, filler, asset_contrib = st.columns([9, 1, 9])
 
 with asset_metrics_display:  
     st.header('Assets Metrics')
@@ -189,23 +200,66 @@ with asset_metrics_display:
         }
     )
 
-with corr_matrix_display:
-    # Corelation matrix
-    daily_return = log_return(closed_price_wide)
-    matrix = corr_matrix(daily_return)
+with asset_contrib: 
+    # asset contribution display
+    contri_1 = pd.DataFrame(portfo_m['Contribution (log)']).reset_index()
+    contri_1.columns = ['Ticker', 'Contribution (log)']
 
-    # Colored table for matrix
+    contri_2 = pd.DataFrame(portfo_m['Contribution']).reset_index()
+    contri_2.columns = ['Ticker', 'Contribution']
 
-    heatmap = heatmap(matrix)
+    contri_3 = pd.DataFrame(portfo_m['Contribution Share']).reset_index()
+    contri_3.columns = ['Ticker', 'Contribution Share']
 
-    st.header(
-        "Correlation Matrix", 
-        help="The correlation between stocks are caluclated using dates where price of all stocks are available. Dates with missing price are not used in the calculation. ")
-    date_not_null = closed_price_wide.dropna()
-    min = date_not_null['Date'].min().strftime("%Y-%m-%d")
-    max = date_not_null['Date'].max().strftime("%Y-%m-%d")
+    contri_df = (
+        contri_1
+        .merge(contri_2, on='Ticker')
+        .merge(contri_3, on='Ticker')
+    )
 
-    st.table(heatmap)
+    totals = pd.DataFrame(
+        {
+            "Ticker": ["Total"],
+            "Contribution (log)": [contri_df["Contribution (log)"].sum()],
+            "Contribution": [np.nan],  # intentionally blank
+            "Contribution Share": [contri_df["Contribution Share"].sum()],
+        }
+    )
+
+    contri_df_with_total = pd.concat([contri_df, totals]).set_index('Ticker')
+
+
+    st.header('Assets Contribution to Portfolio')
+    st.dataframe(
+        contri_df_with_total
+        .style.apply(highlight_total_row, axis=1)
+        .format(
+            {
+                'Contribution (log)': '{:.2%}',
+                'Contribution': '{:.2%}',
+                'Contribution Share': '{:.2%}'
+            }
+        ),
+        width='stretch'
+    )
+
+
+# Corelation matrix
+daily_return = log_return(closed_price_wide)
+matrix = corr_matrix(daily_return)
+
+# Colored table for matrix
+
+heatmap = heatmap(matrix)
+
+st.header(
+    "Correlation Matrix", 
+    help="The correlation between stocks are caluclated using dates where price of all stocks are available. Dates with missing price are not used in the calculation. ")
+date_not_null = closed_price_wide.dropna()
+min = date_not_null['Date'].min().strftime("%Y-%m-%d")
+max = date_not_null['Date'].max().strftime("%Y-%m-%d")
+
+st.table(heatmap)
 
 # Closed Price display (chart and table)
 ## select for price/percentage change

@@ -118,6 +118,18 @@ def portfo_metrics(log_return_df: pd.DataFrame,
 
     # align data
     lr = log_return_df[weights.index].dropna()
+
+    
+    # per-asset contribution
+    daily_contrib = lr.mul(weights, axis=1)
+    cumulative_contrib_log = daily_contrib.sum()
+    simple_contrib = np.expm1(cumulative_contrib_log)
+    contrib_share = cumulative_contrib_log / cumulative_contrib_log.sum()
+    cum_contrib_log_sum = cumulative_contrib_log.sum() # for check
+
+
+
+
     ## weighted log return
     port_lr = lr.mul(weights, axis=1).sum(axis=1)
     ## excess log return
@@ -129,12 +141,15 @@ def portfo_metrics(log_return_df: pd.DataFrame,
     sigma = port_lr.std(ddof=1) * np.sqrt(trading_days)
     sharpe = mu_excess / sigma if sigma > 0 else np.nan
 
-    # drawdown
-    growth = np.exp(port_lr.cumsum())
+    # cumulative stats
+    growth = np.expm1(port_lr.cumsum())
     running_max = growth.cummax()
     drawdown = growth / running_max - 1
     max_dd = drawdown.min()
+    cum_return_log = port_lr.sum() # for check
     cum_return = np.exp(port_lr.sum()) - 1
+
+    
 
 
     return {
@@ -142,7 +157,16 @@ def portfo_metrics(log_return_df: pd.DataFrame,
         "StdDev (Volatility σ)": sigma,
         "Sharpe Ratio": sharpe,
         "Max Drawdown": max_dd, 
-        "Cumulative Return": cum_return
+        "Cumulative Return": cum_return, 
+        "Contribution (log)": cumulative_contrib_log,
+        "Contribution": simple_contrib,
+        "Contribution Share": contrib_share, 
+
+        # for error check
+        "Cumulative Return (Log)": cum_return_log, 
+        "Cumulative Contribution (Log) Sum": cum_contrib_log_sum, 
+        "Diff": cum_return_log - cum_contrib_log_sum
+
     }
 
 

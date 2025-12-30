@@ -14,12 +14,16 @@ def main():
     # --- create your normalised copy ---
     closed_price_norm = normalize_to_100(df, date_col="Date", base=100)
 
+    log_retuirn_df = log_return(df, date_col="Date")
+
     print('Raw')
     print(df)
     print('------------------')
     print('Indexed')
     print(closed_price_norm)
-
+    print('------------------')
+    print('Log Return')
+    print(log_retuirn_df)
 
 def log_return(df: pd.DataFrame, date_col: str = "Date") -> pd.DataFrame:
     out = df.copy()
