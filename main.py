@@ -14,7 +14,7 @@ from app_lib.stock_api import ticker_closed_price
 from app_lib.corr_matrix import corr_matrix
 from app_lib.heatmap import heatmap
 from app_lib.line_chart import line_chart
-from app_lib.xlsx_summary_report import xlsx_summary_report
+from app_lib.xlsx_summary_report import xlsx_summary_report, build_portfolio_export
 from app_lib.data_transform import log_return, normalize_to_100
 from app_lib.metrics import asset_metrics, portfo_metrics
 from app_lib.streamlit_helper import highlight_total_row
@@ -102,8 +102,16 @@ with input_fields:
 
     edited_df = st.session_state["applied_df"]
     tickers = edited_df["Tickers"].tolist()
+
     start_date = st.session_state["applied_start"]
     end_date = st.session_state["applied_end"]
+
+    # put start_date and end_date into para dataframe for export
+    para_df = pd.DataFrame(
+        {'Parameter': ['start_date', 'end_date'], 
+         'Value': [start_date, end_date]}
+    )
+    
 
     total_allocated = edited_df["Allocation Percentage"].sum()
 
@@ -163,7 +171,7 @@ with portfo_summary:
     col1, col2, col3 = st.columns(3)
     col1.metric(
         'Max Drawdown', 
-        f"{portfo_m['Max Drawdown']:.2f}%")
+        f"{portfo_m['Max Drawdown']:.2%}")
     col2.metric(
         'Cumulative Return', 
         f"{portfo_m['Cumulative Return']:.2%}")
@@ -179,6 +187,29 @@ with portfo_summary:
         # "Cumulative Return (Log)": cum_return_log, 
         # "Cumulative Contribution (Log) Sum": cum_contrib_log_sum, 
         # "Diff": cum_return_log - cum_contrib_log_sum
+    
+    # write a dataframe to store portfolio summary
+    metric_gp_1 = pd.DataFrame(
+        {
+        'Metric': ['Number of Assets', 'Total Allocation'], 
+        'Value': [len(tickers), total_allocated]
+        }
+    )
+
+    metric_gp_2 = (
+        pd.Series(
+            {k: v for k, v in portfo_m.items() if np.isscalar(v)},
+            name="Value",
+        )
+        .rename_axis("Metric")
+        .reset_index()
+    )
+    
+    metric_ignore = ['Cumulative Contribution (Log) Sum', 'Diff']
+
+    metric_gp_2 = metric_gp_2[~metric_gp_2['Metric'].isin(metric_ignore)]
+
+    port_metric = pd.concat([metric_gp_1, metric_gp_2])
 
 asset_metrics_display, filler, asset_contrib = st.columns([9, 1, 9])
 
@@ -272,12 +303,14 @@ price_display_selection = st.segmented_control(
     key='price_display_mode'
 )
 
+normalised_price_df = normalize_to_100(
+    df=closed_price_wide, 
+    date_col='Date', 
+    base=100.0
+)
+
 display_data = (
-    normalize_to_100(
-        df=closed_price_wide,
-        date_col="Date",
-        base=100.0
-    )
+    normalised_price_df
     if st.session_state["price_display_mode"] == "Indexed"
     else closed_price_wide
 )
@@ -321,9 +354,20 @@ st.header("Download data as xlsx file")
 now = datetime.now()
 now = now.strftime("%Y%m%d_%H%M%S")
 
+xlsx_buf = build_portfolio_export(
+    para=para_df, 
+    portfolio_allocation=edited_df, 
+    portfo_summary=port_metric, 
+    asset_metric=metrics_df, 
+    asset_contrib=contri_df, 
+    price_history=closed_price_wide, 
+    price_history_indexed=normalised_price_df, 
+    corr_matrix=matrix
+    )
+
 if st.download_button(
         label = "Download",
-        data = xlsx_summary_report(closed_price_wide, matrix),
+        data = xlsx_buf.getvalue(),
         file_name = f'{now}_porfo_cor_cal_summary.xlsx'
         ):
     st.write("Thank you for downloading. ")

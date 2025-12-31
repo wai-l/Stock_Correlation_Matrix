@@ -49,6 +49,8 @@ def normalize_to_100(
     """
     out = df.copy()
 
+    # out[date_col] = pd.to_datetime(out[date_col]).dt.date
+
     # Identify price columns
     if price_cols is None:
         price_cols = [c for c in out.columns if c != date_col]

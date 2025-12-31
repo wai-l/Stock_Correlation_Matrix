@@ -145,7 +145,7 @@ def portfo_metrics(log_return_df: pd.DataFrame,
     growth = np.expm1(port_lr.cumsum())
     running_max = growth.cummax()
     drawdown = growth / running_max - 1
-    max_dd = drawdown.min()
+    max_dd = drawdown.min()/100
     cum_return_log = port_lr.sum() # for check
     cum_return = np.exp(port_lr.sum()) - 1
 
@@ -158,9 +158,9 @@ def portfo_metrics(log_return_df: pd.DataFrame,
         "Sharpe Ratio": sharpe,
         "Max Drawdown": max_dd, 
         "Cumulative Return": cum_return, 
-        "Contribution (log)": cumulative_contrib_log,
-        "Contribution": simple_contrib,
-        "Contribution Share": contrib_share, 
+        "Contribution (log)": cumulative_contrib_log, # dic
+        "Contribution": simple_contrib, # dic
+        "Contribution Share": contrib_share, # dic
 
         # for error check
         "Cumulative Return (Log)": cum_return_log, 
