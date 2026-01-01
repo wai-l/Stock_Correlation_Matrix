@@ -1,4 +1,4 @@
-from stock_api import ticker_closed_price
+from app_lib.stock_api import ticker_closed_price
 import pytest
 
 def test_invalid_date():

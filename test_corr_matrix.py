@@ -1,4 +1,4 @@
-from corr_matrix import corr_matrix
+from app_lib.corr_matrix import corr_matrix
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
