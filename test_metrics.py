@@ -1,12 +1,67 @@
+import pandas as pd
+import pytest
+from app_lib.metrics import asset_metrics, portfo_metrics
+from app_lib.data_transform import log_return
+import pytest
+import numpy as np
+from pandas.testing import assert_frame_equal
+
+
 # to test for asset_metrics() function
 '''
 1. Return type
     - Returns a pd.DataFrame
     - Not None, not a Series, not a dict
+'''
+def test_asset_metrics_dtypes(): 
+    data = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [1, 2, 3, 4],
+        "B": [2, 4, 6, 8],
+        "C": [3, 6, 9, 12]
+    }
+
+    df = pd.DataFrame(data)
+
+    df_log_return = log_return(df, 'Date')
+
+    result = asset_metrics(df_log_return, 'Date')
+
+    assert isinstance(result, pd.DataFrame)
+
+'''
 2. Columns
     - All expected column names exist
     - Column names match exactly (including symbols like μ, σ)
     - Column order is correct
+'''
+def test_asset_metrics_col(): 
+    data = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [1, 2, 3, 4],
+        "B": [2, 4, 6, 8],
+        "C": [3, 6, 9, 12]
+    }
+
+    df = pd.DataFrame(data)
+
+    df_log_return = log_return(df, 'Date')
+
+    df_result = asset_metrics(df_log_return, 'Date')
+
+    col_result = list(df_result.columns)
+
+    col_expected = [
+        "Annualised Return (μ)", 
+        "StdDev (Volatility σ)", 
+        "Cumulative Return", 
+        "Observations"]
+
+    assert col_result == col_expected
+
+
+
+'''
 3. Index
     - Index values match ticker_order
     - Index order is correct
