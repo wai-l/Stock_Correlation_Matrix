@@ -278,3 +278,64 @@ def test_asset_metrics_cal_obs():
     )
 
 # repeat same strucutre for portfo_metrics
+
+'''
+1. Return type
+    - Returns a dictionary
+'''
+def test_portfo_metrics_dtypes(): 
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [1, 2, 3, 4],
+        "B": [2, 4, 6, 8],
+        "C": [3, 6, 9, 12]
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    log_return_df = log_return(portfo_return_df, 'Date')
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A", "B", "C"],
+        "Allocation Percentage": [80, 10, 10],
+    })
+
+    result = portfo_metrics(log_return_df, allocation_df)
+
+    assert isinstance(result, dict)
+
+
+'''
+2. Columns
+    - All expected column names exist
+    - Column names match exactly (including symbols like μ, σ)
+    - Column order is correct
+'''
+# do we need this? 
+
+'''
+3. Index
+    - Index values match ticker_order
+    - Index order is correct
+    - Index name (if any) is as expected
+    - Missing tickers produce NaN (if allowed)
+    - Extra tickers are dropped (if expected)
+'''
+
+# do we need this?  
+
+'''
+4. Shape
+    - Number of rows == len(ticker_order)
+    - Number of columns == expected metric count
+'''
+
+# do we need this? 
+
+'''
+5. Values (content correctness)
+    - Each column equals the corresponding input series
+    - Values are aligned correctly after reindex
+    - No unintended mixing between tickers
+    - NaNs appear only where expected
+'''
