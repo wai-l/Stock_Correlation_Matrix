@@ -112,13 +112,33 @@ def portfo_metrics(log_return_df: pd.DataFrame,
     )
     weights = weights / weights.sum()
 
+    # ---- 2) Subset log returns to assets in the allocation
+    lr = log_return_df[weights.index].copy()
+
+    # ---- 3) Drop assets with no valid data (all NaN log-returns)
+    valid_assets = lr.columns[lr.notna().any()]
+
+    if len(valid_assets) == 0:
+        raise ValueError("No valid return series found for any of the allocated tickers.")
+
+    lr = lr[valid_assets]
+
+    # Align & renormalise weights to valid assets only
+    weights = weights.loc[valid_assets]
+    weights = weights / weights.sum()
+
+    # ---- 4) Drop rows with NaNs across the *valid* assets (e.g. first row)
+    lr = lr.dropna(how="any")
+
+    if lr.empty:
+        raise ValueError(
+            "No overlapping observations across the allocated tickers "
+            "after dropping NaNs. Check your price / log-return inputs."
+        )
+
     # get daily risk-free ratio
     rf_daily_rate = (1 + rf_annual_rate) ** (1 / trading_days) - 1
     rf_daily_log = np.log1p(rf_daily_rate)
-
-    # align data
-    lr = log_return_df[weights.index].dropna()
-
     
     # per-asset contribution
     daily_contrib = lr.mul(weights, axis=1)

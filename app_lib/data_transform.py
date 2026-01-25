@@ -29,6 +29,15 @@ def log_return(df: pd.DataFrame, date_col: str = "Date") -> pd.DataFrame:
     out = df.copy()
     price_cols = [c for c in out.columns if c != date_col]
 
+    price_vals = out[price_cols].apply(pd.to_numeric, errors="coerce")
+
+    bad_mask = (price_vals <= 0) & price_vals.notna()
+    if bad_mask.any().any():
+        raise ValueError(
+            "Non-positive prices encountered. "
+            "Log returns require strictly positive prices."
+        )
+
     for c in price_cols:
         s = out[c]
         # keep NaNs, but compute returns using last available price

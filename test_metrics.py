@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 from pandas.testing import assert_frame_equal
 from numpy.testing import assert_allclose
+import warnings
 
 
 # to test for asset_metrics() function
@@ -306,36 +307,99 @@ def test_portfo_metrics_dtypes():
 
 
 '''
-2. Columns
-    - All expected column names exist
-    - Column names match exactly (including symbols like μ, σ)
-    - Column order is correct
+2.1. Values - Expected Return
 '''
-# do we need this? 
+def test_profo_metrics_expected_return(): 
+
+    days = 252
+
+    # log_return
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [1, 1, 1, 1],
+        "B": [0, 0, 0, 0],
+        "C": [-1, -1, -1, -1], 
+        "D": [1, 2, 3, 4]
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A", "B", "C", "D"],
+        "Allocation Percentage": [70, 5, 10, 15],
+    })
+
+    result = portfo_metrics(portfo_return_df, allocation_df, trading_days=days)['Expected Return (μ)']
+
+    # expected: 
+    a_expected = np.mean(portfo_return['A'])*days
+    b_expected = np.mean(portfo_return['B'])*days
+    c_expected = np.mean(portfo_return['C'])*days
+    d_expected = np.mean(portfo_return['D'])*days
+
+    expected = a_expected*0.7 + b_expected*0.05 + c_expected * 0.1 + d_expected * 0.15
+
+    assert_allclose(
+        actual = result, 
+        desired = expected, 
+        equal_nan = True
+    )
 
 '''
-3. Index
-    - Index values match ticker_order
-    - Index order is correct
-    - Index name (if any) is as expected
-    - Missing tickers produce NaN (if allowed)
-    - Extra tickers are dropped (if expected)
+2.2. Values - value error
 '''
 
-# do we need this?  
+def test_profo_metrics_value_error(): 
+
+    with pytest.raises(ValueError): 
+
+        days = 252
+
+        # actual price
+        portfo_return = {
+            "Date": ["2024-01-01"],
+            "A": [1],
+            "B": [2]
+        }
+
+        portfo_return_df = pd.DataFrame(portfo_return)
+
+        log_return_df = log_return(portfo_return_df)
+
+        allocation_df = pd.DataFrame({
+            "Tickers": ["A", "B"],
+            "Allocation Percentage": [70, 30],
+        })
+
+        result = portfo_metrics(log_return_df, allocation_df, trading_days=days)
+
+
+    with pytest.raises(ValueError): 
+        days = 252
+
+            
+        # actual price
+        portfo_return = {
+            "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+            "A": [0, 0, 0, 0]
+        }
+
+        portfo_return_df = pd.DataFrame(portfo_return)
+
+        log_return_df = log_return(portfo_return_df)
+
+        allocation_df = pd.DataFrame({
+            "Tickers": ["A"],
+            "Allocation Percentage": [70],
+        })
+
+        result = portfo_metrics(log_return_df, allocation_df, trading_days=days)
+
+        print(result)
 
 '''
-4. Shape
-    - Number of rows == len(ticker_order)
-    - Number of columns == expected metric count
+2.3. Values - Standard Deviation
 '''
 
-# do we need this? 
-
-'''
-5. Values (content correctness)
-    - Each column equals the corresponding input series
-    - Values are aligned correctly after reindex
-    - No unintended mixing between tickers
-    - NaNs appear only where expected
-'''
+def test_profo_metrics_std_dev(): 
+    pass

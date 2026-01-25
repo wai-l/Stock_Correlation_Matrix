@@ -56,6 +56,20 @@ def test_log_return_partial_nan(): # test case when there's nan in the middle ro
 
     assert_frame_equal(result, expected)
 
+def test_log_return_raises_on_zero_prices():
+    """
+    log_return should raise a ValueError when any price is <= 0,
+    because log returns are undefined for non-positive prices.
+    """
+    data = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [0, 0, 0, 0],   # all zero -> invalid for log returns
+    }
+    df = pd.DataFrame(data)
+
+    with pytest.raises(ValueError, match="Non-positive prices"):
+        log_return(df, "Date")
+
 def test_normalize_to_100_standard(): 
     data = {
         "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
