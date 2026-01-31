@@ -402,4 +402,227 @@ def test_profo_metrics_value_error():
 '''
 
 def test_profo_metrics_std_dev(): 
+
+    days = 252
+
+    # result
+
+    ## log_return
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [1, 1, 1, 1],
+        "B": [0, 0, 0, 0],
+        "C": [-1, -1, -1, -1], 
+        "D": [1, 2, 3, 4]
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A", "B", "C", "D"],
+        "Allocation Percentage": [70, 5, 10, 15],
+    })
+
+    result = portfo_metrics(portfo_return_df, allocation_df, trading_days=days)['StdDev (Volatility σ)']
+
+    # expected
+    # allocation_df['Allocation Percentage'] = allocation_df['Allocation Percentage']/allocation_df['Allocation Percentage'].sum()
+
+    portfo_retrun_weighted = {
+    'Date': portfo_return_df['Date'], 
+    'A': portfo_return_df['A']*0.7,
+    'B': portfo_return_df['B']*0.05,
+    'C': portfo_return_df['C']*0.1,
+    'D': portfo_return_df['D']*0.15
+}
+
+    portfo_return_weighted_df = pd.DataFrame(portfo_retrun_weighted)
+
+    portfo_return_weighted_df['Portfolio'] = (
+        portfo_return_weighted_df
+        .drop(columns=['Date'])
+        .sum(axis=1)
+    )
+
+    weighted_return = portfo_return_weighted_df['Portfolio']
+
+    portfo_return_mean = portfo_return_weighted_df['Portfolio'].mean()
+
+    # 0: 0.75; 1: 0.9; 2: 1.05; 3: 1.2
+    # mean = 0.974999999999
+
+    expected = (
+        np.sqrt(
+            np.sum([
+                np.square(weighted_return[0]-portfo_return_mean), 
+                np.square(weighted_return[1]-portfo_return_mean), 
+                np.square(weighted_return[2]-portfo_return_mean), 
+                np.square(weighted_return[3]-portfo_return_mean)
+                ]
+                )/3
+            ) * np.sqrt(252)
+        )
+    
+    assert_allclose(
+        actual = result, 
+        desired = expected, 
+        equal_nan = True
+    )
+
+        
+'''
+2.4. Values - Sharpe Ratio
+'''
+
+def test_profo_metrics_sharpe_ratio(): 
+
+    '''
+    sharpe ratio = (Expected Return - Risk Free Rate) / StdDev
+    '''
+
+    days = 252
+
+    rf_annual_rate = 0.045
+
+    # result
+
+    ## log_return
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [1, 1, 1, 1],
+        "B": [0, 0, 0, 0],
+        "C": [-1, -1, -1, -1], 
+        "D": [1, 2, 3, 4]
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A", "B", "C", "D"],
+        "Allocation Percentage": [70, 5, 10, 15],
+    })
+
+    # result
+
+    result = portfo_metrics(
+        portfo_return_df, 
+        allocation_df, 
+        trading_days=days, 
+        rf_annual_rate=rf_annual_rate
+        )['Sharpe Ratio']
+
+    # expected
+    ## implementation of daily risk-free log return
+    portfo_retrun_weighted = {
+        'Date': portfo_return_df['Date'], 
+        'A': portfo_return_df['A']*0.7,
+        'B': portfo_return_df['B']*0.05,
+        'C': portfo_return_df['C']*0.1,
+        'D': portfo_return_df['D']*0.15
+    }
+
+
+    rf_daily_rate = (1 + rf_annual_rate)**(1/days) - 1
+    rf_daily_log = np.log1p(rf_daily_rate)
+
+    portfo_return_weighted_df = pd.DataFrame(portfo_retrun_weighted)
+
+    portfo_return_weighted_df['Portfolio'] = (
+        portfo_return_weighted_df
+        .drop(columns=['Date'])
+        .sum(axis=1)
+    )
+
+    weighted_return = portfo_return_weighted_df['Portfolio']
+
+    excess_lr = weighted_return - rf_daily_log
+
+    mu_excess = excess_lr.mean() * days
+
+    ## other factors for expected sharpe ratio
+
+    expected_std = portfo_metrics(
+        portfo_return_df, 
+        allocation_df, 
+        trading_days=days
+        )['StdDev (Volatility σ)']
+
+    # we don't have to do return - rf here because it's already in mu_excess
+    expected = mu_excess / expected_std
+
+    assert_allclose(
+        actual = result, 
+        desired = expected, 
+        equal_nan = True, 
+
+    )
+
+'''
+2.5. Values - Max Drawdown
+'''
+
+def test_profo_metrics_max_drawdown():
+    '''
+    max drawdown (%) = max(peak - trough) / peak
+    '''
     pass
+    # below is from co pilot and need review
+    days = 252
+
+    # result
+
+    ## log_return
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
+        "A": [1, 1, 1, 1],
+        "B": [0, 0, 0, 0],
+        "C": [-1, -1, -1, -1], 
+        "D": [1, 2, 3, 4]
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A", "B", "C", "D"],
+        "Allocation Percentage": [70, 5, 10, 15],
+    })
+
+    result = portfo_metrics(
+        portfo_return_df, 
+        allocation_df, 
+        trading_days=days
+        )['Max Drawdown']
+
+    # expected
+    portfo_retrun_weighted = {
+        'Date': portfo_return_df['Date'], 
+        'A': portfo_return_df['A']*0.7,
+        'B': portfo_return_df['B']*0.05,
+        'C': portfo_return_df['C']*0.1,
+        'D': portfo_return_df['D']*0.15
+    }
+
+    portfo_return_weighted_df = pd.DataFrame(portfo_retrun_weighted)
+
+    portfo_return_weighted_df['Portfolio'] = (
+        portfo_return_weighted_df
+        .drop(columns=['Date'])
+        .sum(axis=1)
+    )
+
+    weighted_return = portfo_return_weighted_df['Portfolio']
+
+    cumulative = (1 + weighted_return).cumprod()
+
+    peak = cumulative.cummax()
+
+    drawdown = (peak - cumulative) / peak
+
+    expected = drawdown.max()
+
+    assert_allclose(
+        actual = result, 
+        desired = expected, 
+        equal_nan = True
+    )
+

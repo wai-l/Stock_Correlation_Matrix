@@ -59,7 +59,9 @@ def asset_metrics(
     pd.DataFrame
         Asset-level metrics:
         - Annualised Return (μ)
-        - Annualised Volatility (σ)
+        - Annualised Volatility (σ) 
+            (ddof = 1) 
+            (* there are arguement between using ddof = 1 or = 0 in finance *)
         - Cumulative Return
         - Observations
     """
@@ -104,6 +106,35 @@ def portfo_metrics(log_return_df: pd.DataFrame,
                    trading_days: int = 252, 
                    rf_annual_rate: float = 0.045
                    ) -> dict: 
+    '''
+    Compute portfolio-level performance metrics from daily log returns 
+    and asset allocation. 
+    Parameters
+    ----------
+    log_return_df : pd.DataFrame
+        DataFrame with daily log returns for assets.
+    allocation_df : pd.DataFrame
+        DataFrame with columns 'Tickers' and 'Allocation Percentage'.
+    trading_days : int
+        Number of trading days in a year (default is 252).
+    rf_annual_rate : float
+        Annual risk-free rate (default is 0.045 for 4.5%).
+
+    Returns
+    -------
+    dict
+        Portfolio-level metrics:
+        - Expected Return (μ)
+        - StdDev (Volatility σ)
+            (ddof = 1) 
+            (* there are arguement between using ddof = 1 or = 0 in finance *)
+        - Sharpe Ratio
+        - Max Drawdown
+        - Cumulative Return
+        - Contribution (log)
+        - Contribution
+        - Contribution Share
+    '''
     # weights
     weights = (
         allocation_df
