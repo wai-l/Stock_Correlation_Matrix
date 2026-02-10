@@ -563,9 +563,10 @@ def test_profo_metrics_sharpe_ratio():
 
 def test_profo_metrics_max_drawdown():
     '''
-    max drawdown (%) = max(peak - trough) / peak
+    max drawdown (%) = max(peak - trough) / peak (as positive)
+    or 
+    max drawdown (-%) = min(trough / peak - 1) (as negative)
     '''
-    pass
     # below is from co pilot and need review
     days = 252
 
@@ -573,52 +574,27 @@ def test_profo_metrics_max_drawdown():
 
     ## log_return
     portfo_return = {
-        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04"],
-        "A": [1, 1, 1, 1],
-        "B": [0, 0, 0, 0],
-        "C": [-1, -1, -1, -1], 
-        "D": [1, 2, 3, 4]
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05", "2024-01-06"],
+        "A": [100, 130, 120, 140, 139, 138],
     }
 
     portfo_return_df = pd.DataFrame(portfo_return)
 
     allocation_df = pd.DataFrame({
-        "Tickers": ["A", "B", "C", "D"],
-        "Allocation Percentage": [70, 5, 10, 15],
+        "Tickers": ["A"],
+        "Allocation Percentage": [100],
     })
 
+    log_return_df = log_return(portfo_return_df, 'Date')
+
     result = portfo_metrics(
-        portfo_return_df, 
+        log_return_df, 
         allocation_df, 
         trading_days=days
         )['Max Drawdown']
 
     # expected
-    portfo_retrun_weighted = {
-        'Date': portfo_return_df['Date'], 
-        'A': portfo_return_df['A']*0.7,
-        'B': portfo_return_df['B']*0.05,
-        'C': portfo_return_df['C']*0.1,
-        'D': portfo_return_df['D']*0.15
-    }
-
-    portfo_return_weighted_df = pd.DataFrame(portfo_retrun_weighted)
-
-    portfo_return_weighted_df['Portfolio'] = (
-        portfo_return_weighted_df
-        .drop(columns=['Date'])
-        .sum(axis=1)
-    )
-
-    weighted_return = portfo_return_weighted_df['Portfolio']
-
-    cumulative = (1 + weighted_return).cumprod()
-
-    peak = cumulative.cummax()
-
-    drawdown = (peak - cumulative) / peak
-
-    expected = drawdown.max()
+    expected  = 120/130 - 1
 
     assert_allclose(
         actual = result, 
@@ -626,3 +602,10 @@ def test_profo_metrics_max_drawdown():
         equal_nan = True
     )
 
+
+'''
+2.6. Values - Cumulative Return
+'''
+
+def test_profo_metrics_cumulative_return():
+    pass

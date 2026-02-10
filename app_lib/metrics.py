@@ -174,7 +174,7 @@ def portfo_metrics(log_return_df: pd.DataFrame,
     # per-asset contribution
     daily_contrib = lr.mul(weights, axis=1)
     cumulative_contrib_log = daily_contrib.sum()
-    simple_contrib = np.expm1(cumulative_contrib_log)
+    simple_contrib = np.exp(cumulative_contrib_log)
     contrib_share = cumulative_contrib_log / cumulative_contrib_log.sum()
     cum_contrib_log_sum = cumulative_contrib_log.sum() # for check
 
@@ -193,12 +193,12 @@ def portfo_metrics(log_return_df: pd.DataFrame,
     sharpe = mu_excess / sigma if sigma > 0 else np.nan
 
     # cumulative stats
-    growth = np.expm1(port_lr.cumsum())
+    growth = np.exp(port_lr.cumsum())
     running_max = growth.cummax()
     drawdown = growth / running_max - 1
-    max_dd = drawdown.min()/100
+    max_dd = drawdown.min()
     cum_return_log = port_lr.sum() # for check
-    cum_return = np.exp(port_lr.sum()) - 1
+    cum_return = np.exp(cum_return_log) - 1
 
     
 
