@@ -209,7 +209,7 @@ def portfo_metrics(log_return_df: pd.DataFrame,
         "Sharpe Ratio": sharpe,
         "Max Drawdown": max_dd, 
         "Cumulative Return": cum_return, 
-        "Contribution (log)": cumulative_contrib_log, # dic
+        "Contribution (log)": cumulative_contrib_log, # series with index
         "Contribution": simple_contrib, # dic
         "Contribution Share": contrib_share, # dic
 

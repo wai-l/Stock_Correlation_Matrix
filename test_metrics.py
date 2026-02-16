@@ -572,7 +572,7 @@ def test_profo_metrics_max_drawdown():
 
     # result
 
-    ## log_return
+    ## actual price
     portfo_return = {
         "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05", "2024-01-06"],
         "A": [100, 130, 120, 140, 139, 138],
@@ -585,6 +585,7 @@ def test_profo_metrics_max_drawdown():
         "Allocation Percentage": [100],
     })
 
+    ## log return
     log_return_df = log_return(portfo_return_df, 'Date')
 
     result = portfo_metrics(
@@ -608,4 +609,124 @@ def test_profo_metrics_max_drawdown():
 '''
 
 def test_profo_metrics_cumulative_return():
+    days = 252
+
+    # result
+
+    # actual price
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05", "2024-01-06"],
+        "A": [100, 130, 120, 140, 139, 138],
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A"],
+        "Allocation Percentage": [100],
+    })
+
+    # log return
+    log_return_df = log_return(portfo_return_df, 'Date')
+
+    result = portfo_metrics(
+        log_return_df, 
+        allocation_df, 
+        trading_days=days
+        )['Cumulative Return']
+
+    # expected
+    expected  = (138-100)/100
+
+    assert_allclose(
+        actual = result, 
+        desired = expected, 
+        equal_nan = True
+    )
+
+'''
+2.7. Values - Contribution (Log)
+'''
+
+def test_profo_metrics_contribution_log():
+    days = 252
+
+    # result
+
+    ## actual price
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03"],
+        "A": [100, 200, 300],
+        "B": [100, 200, 300]
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A", "B"],
+        "Allocation Percentage": [50, 50],
+    })
+
+    ## log return
+    log_return_df = log_return(portfo_return_df, 'Date')
+
+    result = portfo_metrics(
+        log_return_df, 
+        allocation_df, 
+        trading_days=days
+        )['Contribution (log)']
+
+    # expected
+    expected_ab  = (np.log(300) - np.log(100)) # average log return of A and B
+    expected  = pd.Series({
+        'A': expected_ab * 0.5,
+        'B': expected_ab * 0.5
+        })
+
+    pd.testing.assert_series_equal(left = result, right = expected)
+
+'''
+2.8. Values - Contribution
+'''
+
+def test_profo_metrics_contribution():
     pass
+    # need fixing
+
+    days = 252
+
+    # result
+
+    ## actual price
+    portfo_return = {
+        "Date": ["2024-01-01", "2024-01-02", "2024-01-03"],
+        "A": [100, 200, 300],
+        "B": [100, 200, 300]
+    }
+
+    portfo_return_df = pd.DataFrame(portfo_return)
+
+    allocation_df = pd.DataFrame({
+        "Tickers": ["A", "B"],
+        "Allocation Percentage": [50, 50],
+    })
+
+    ## log return
+    log_return_df = log_return(portfo_return_df, 'Date')
+
+    result = portfo_metrics(
+        log_return_df, 
+        allocation_df, 
+        trading_days=days
+        )['Contribution']
+
+    # expected
+    expected_ab  = (600-200)/200
+    expected  = pd.Series({
+        'A': expected_ab * 0.5,
+        'B': expected_ab * 0.5
+        })
+
+    pd.testing.assert_series_equal(left = result, right = expected)
+
+
