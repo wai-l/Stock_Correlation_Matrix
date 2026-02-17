@@ -39,7 +39,7 @@ st.session_state.setdefault("price_display_mode", "Price")
 # Title
 st.title("Portfolio Correlation Calculator V2")
 # this need rewritten
-st.markdown("This app uses the Yahoo Finance API to query the daily price of the selected assets within the date range. The data is then used to return the price chart and calculate the correlation between each selected stock. You can add or remove stocks, and amend the date range using the input boxs below. Please refer to Yahoo Fiance for the correct ticker references. ")
+st.markdown("This app uses the Yahoo Finance API to query the daily price of the selected assets within the date range. The data is then used to calculate performance metrics and correlation between each selected stock. You can add or remove stocks, and amend the date range using the input boxs below. Please refer to Yahoo Fiance for the correct ticker references. ")
 
 input_fields, filler, portfo_summary = st.columns([9, 1, 9])
 

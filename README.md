@@ -1,92 +1,194 @@
-# Stock Correlation Matrix
-This project is a variation of my CS50P Final Project. 
+# Portfolio Correlation Calculator V2
 
-Visit this for the web app hosting on Streamlit: 
-https://stock-correlation-matrix.streamlit.app
+A Streamlit web app for analyzing portfolio performance, asset behavior, and cross-asset correlation using Yahoo Finance data.
 
-If you see the below message while visiting the link, feel free to click the blue button and it should bring the app back: 
-![Screenshot of a message from the web app showing it's inactive and promt user to reactivate it](screenshots/sleep.png)
+Hosted app:
+- https://stock-correlation-matrix.streamlit.app
 
+---
 
-On the web app, input the tickers and date range: 
-![Screenshot of user input fields on the web app](screenshots/user_input.png)
+## Overview
 
-The web app will update the below plots using the new tickers and date range: 
-![Screenshot of the stock daily closed price line chart](screenshots/plot1.png)
-![Screenshot of the correlation matrix table](screenshots/plot2.png)
+This app helps you move from a simple ticker list to a portfolio-level view of:
+- Risk and return metrics
+- Asset-level performance
+- Correlation structure
+- Contribution by asset
+- Downloadable reporting in Excel
 
-The pricing data and the correlation matrix are downloadable in excel format: 
-![Screenshot of the download button on the web app](screenshots/download.png)
+It is designed for quick exploratory analysis with editable portfolio inputs and immediate visual and metric feedback.
 
-# Below is the readme file for the original project. 
+---
 
-## Description:
-### Summary:
-This project uses the `yfinance` package to retrieve stock pricing data and calculate the correlation of the price changes between the selected stocks using their daily closed price. A Streamlit web app is used to show a line chart of the price change and a correlation matrix. The user also has the option to download the price and correlation data as an xlsx file.
+## Key Features
 
-### Packages used:
-- datetime
-- pandas
-- streamlit
-- altair
-- streamlit_tags
-- openpyxl
-- yfinance
-- matplotlib
+- Editable portfolio table (`Tickers`, `Allocation Percentage`)
+- Date-range based analysis
+- Portfolio summary metrics:
+  - Expected Return (annualized)
+  - Volatility / StdDev (annualized)
+  - Sharpe Ratio
+  - Max Drawdown
+  - Cumulative Return
+- Asset-level metrics:
+  - Annualized Return
+  - Volatility
+  - Cumulative Return
+  - Observations
+- Asset contribution table:
+  - Contribution (log)
+  - Contribution Share
+- Correlation matrix with styled heatmap
+- Price visualization modes:
+  - Raw price
+  - Indexed to 100 (first valid date per asset)
+- One-click Excel export with multiple analysis sheets
 
-### Files
-#### project.py
-This file contains all the Streamlit codes and calls the individual functions which perform the data gathering, cleaning and visualisation.
+---
 
-#### test_project.py
-This is a `pytest` file in which there are multiple testing functions to check if the custom functions in `project.py` are returning expected results, and if errors are being flagged when unexpected values are returned.
+## How to Use
 
-#### requirements.txt
-This contains all the external packages used for the `project.py` and `test_project.py` scripts.
+1. Set `Start Date` and `End Date`.
+2. Edit the portfolio table:
+   - Add or remove tickers
+   - Adjust allocation percentages
+3. Click `Calculate`.
+4. Review:
+   - Portfolio Summary
+   - Asset Metrics
+   - Asset Contribution
+   - Correlation Matrix
+   - Price chart and data table (`Price` vs `Indexed`)
+5. Download the full `.xlsx` report.
 
-### Data gathering
-Data input fields are created using the `st_tags` and `st.date_input` functions, which allow users to easily input the stocks and select the date period they want for the calculation.
+---
 
-The stock input field has several tickers pre-filled as examples for the user. This field is limited to 20 tickers to avoid abusive usage of the API.
+## Screenshots
 
-The date input fields also have preset filled. The start date would be one year ago from today, and the end date would be today.
+If the hosted app is sleeping, click the blue reactivation button:
 
-The selected stock and date data will be fed into the `ticker_closed_price` function. It will evaluate if the user inputs 2 or more tickers, and if the date period is valid (start date >= end date). If the user fails one of these requirements, an error message will be prompted and ask the user to change their input value.
+![App sleep/reactivation screen](screenshots/sleep.png)
 
-When both requirements are passed, the function will then call the Yahoo finance API and extract the pricing data for the selected tickers within the selected date period.
+Portfolio input section:
 
-The function will also evaluate if any one of the tickers returned `null` on all dates. When that occurs, it will raise a `ValueError` and tell the user that the API cannot find any price data for a specific ticker, and ask the user to amend the input.
+![User input fields](screenshots/user_input.png)
 
-### Data Cleaning & Transformation
-The data received from the Yahoo Finance API contains multiple dataframes grouped by individual tickers. The `ticker_closed_price` function would perform some basic data cleaning to merge them under one data frame in wide format. This will then be returned to the main script. In the main script, a separate line is used to transform the dataframe into long format. Both wide and long formats of the data are preserved in the main script for two different visualisations.
+Portfolio summary and contribution views:
 
-### Data Visualisation - Closed Price Line Chart
-The `line_chart` function utilises the `altair` package to visualise the daily closed price for each ticker in an interactive line chart. The long format dataframe was used for the visualisation.
+<!-- TODO: Replace with an up-to-date screenshot from current V2 app -->
+![Portfolio summary](screenshots/portfolio_summary.png)
+![Assets metrics](screenshots/assets_metrics.png)
+![Assets_contribution](screenshots/assets_contribution.png)
 
-The line chart performs as a visual indicator for the user to easily skim the price change history of the selected tickers. The line chart also indicates when is the starting date and end date for each ticker within the selected date period, as stocks can be listed or delisted within the period. This is an important indicator for the correlation matrix in the next step, as it will only calculate the correlation using dates where prices for all selected tickers are available.
+Price chart and correlation output examples:
 
-The line chart is also interactive. The user can hover over each line and it will show the closed price of the stock at the closest date. The legend on the right side of the chart is sorted according to the latest price of the tickers, therefore it is aligned with the order of the lines at their endpoint.
+![Closed price line chart](screenshots/plot1.png)
+![Correlation matrix table](screenshots/plot2.png)
 
-### Data Visualisation - Correlation Matrix
-The correlation matrix is first done by transforming the wide format dataframe to a correlation matrix with `corr` function from the `pandas` library. There is a lower threshold set for the number of valid rows. If there are less than 3 rows of data with all selected tickers having non-na value, a `ValueError` would be raised and prompt the user to adjust the stock and date input.
+Price view toggle (`Price` vs `Indexed`) and data table:
 
-After the correlation matrix is calculated, it is coloured using `df.style`. The correlation matrix is then returned as a static table in Streamlit for visualisation.
+<!-- TODO: Replace with an up-to-date screenshot from current V2 app -->
+![Price toggle and data table](screenshots/todo_price_toggle_v2.png)
 
-### Data Extract
-The wide format pricing dataframe and the correlation matrix are downloadable on the Streamlit web app.
+Download section:
 
-An Excel file with two separate sheets containing the two datasets is created using the `openpyxl` library and the `ExcelWriter` function from `pandas`.
+![Download button](screenshots/download.png)
 
-We used Excel file as the data extraction format to streamline the downloading process so that users can download both datasets in a one-click action.
+---
 
-### Code Testing
-Multiple test functions are set under the `test_project.py` file to test the below functions from the `project.py` script.
+## Technical Overview
 
-#### ticker_closed_price
-A test function was used to check if the function returns a `pandas` dataframe when there are two or more tickers input, and the start date is smaller than the end date. Two other test functions were used to validate if the function returned `ValueError` when there are less than two tickers, and when the start date is larger than the end date in the user input.
+### Entry Point
+- `main.py`
+  Streamlit app orchestration: UI, validation, calculations, rendering, and export.
 
-#### corr_matrix
-Test functions were used to check if the correlation matrix returned the correct calculation in several different scenarios. They were also used to test if the function would return `ValueError` with invalid data.
+### Core Modules (`app_lib/`)
+- `stock_api.py`
+  Fetches closing price history from Yahoo Finance.
+- `data_transform.py`
+  Log-return calculation and price normalization (`base=100`).
+- `metrics.py`
+  Asset and portfolio metrics.
+- `corr_matrix.py`
+  Correlation matrix computation with minimum-data guardrails.
+- `heatmap.py`
+  Styled correlation table.
+- `line_chart.py`
+  Altair line chart for price and index views.
+- `xlsx_summary_report.py`
+  Multi-sheet Excel export builder.
+- `streamlit_helper.py`
+  Streamlit display helpers (for example, total-row highlighting).
 
-#### heatmap
-Test functions were used to check if the function successfully returned a `pd.io.formats.style.Styler` instance, which indicates the dataframe is being styled as designed.
+### Tests
+- `test_stock_api.py`
+- `test_data_transform.py`
+- `test_metrics.py`
+- `test_corr_matrix.py`
+- `test_heatmap.py`
+
+---
+
+## Local Setup
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run app:
+
+```bash
+streamlit run main.py
+```
+
+Run tests:
+
+```bash
+pytest
+```
+
+---
+
+## Data and Calculation Notes
+
+- Data source: Yahoo Finance (`yfinance`)
+- Returns used for analytics: daily log returns
+  - `log_return = ln(P_t) - ln(P_(t-1))`
+- Log return calculation rejects non-positive prices.
+- Portfolio calculations use allocation weights normalized across valid assets.
+- Correlation requires sufficient overlapping valid observations.
+
+---
+
+## Input Validation Rules
+
+The app blocks analysis and shows errors when:
+- Portfolio is empty
+- Any ticker is blank
+- Duplicate tickers exist
+- Allocation contains negative values
+- Total allocation exceeds 100%
+- Date range is invalid (`start >= end`)
+- Price data is unavailable for selected assets and date range
+
+---
+
+## Excel Export Contents
+
+The download includes these sheets:
+- `parameters`
+- `portfolio_allocation`
+- `portfo_summary`
+- `asset_metric`
+- `asset_contrib`
+- `price_history`
+- `price_history_indexed`
+- `correlation_matrix`
+
+---
+
+## Project History
+
+This project began as a CS50P final project focused on stock correlation and evolved into a modular portfolio analytics app (V2) with broader metrics, validation, and richer export and reporting.
