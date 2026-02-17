@@ -3,18 +3,13 @@ from datetime import date, datetime
 import pandas as pd
 import numpy as np
 import streamlit as st
-import altair as alt
-from streamlit_tags import st_tags
-import io
-from openpyxl import Workbook
-from openpyxl.styles import Font, Alignment, Border
 
 # scripts
 from app_lib.stock_api import ticker_closed_price
 from app_lib.corr_matrix import corr_matrix
 from app_lib.heatmap import heatmap
 from app_lib.line_chart import line_chart
-from app_lib.xlsx_summary_report import xlsx_summary_report, build_portfolio_export
+from app_lib.xlsx_summary_report import build_portfolio_export
 from app_lib.data_transform import log_return, normalize_to_100
 from app_lib.metrics import asset_metrics, portfo_metrics
 from app_lib.streamlit_helper import highlight_total_row
@@ -366,5 +361,4 @@ if st.download_button(
         file_name = f'{now}_porfo_cor_cal_summary.xlsx'
         ):
     st.write("Thank you for downloading. ")
-
 

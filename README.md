@@ -75,7 +75,6 @@ Portfolio input section:
 
 Portfolio summary and contribution views:
 
-<!-- TODO: Replace with an up-to-date screenshot from current V2 app -->
 ![Portfolio summary](screenshots/portfolio_summary.png)
 ![Assets metrics](screenshots/assets_metrics.png)
 ![Assets_contribution](screenshots/assets_contribution.png)
@@ -87,8 +86,7 @@ Price chart and correlation output examples:
 
 Price view toggle (`Price` vs `Indexed`) and data table:
 
-<!-- TODO: Replace with an up-to-date screenshot from current V2 app -->
-![Price toggle and data table](screenshots/todo_price_toggle_v2.png)
+![Price toggle and data table](screenshots/price_toggle.png)
 
 Download section:
 
