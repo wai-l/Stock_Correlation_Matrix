@@ -5,3 +5,4 @@ openpyxl
 yfinance
 numpy
 pytest
+matplotlib
