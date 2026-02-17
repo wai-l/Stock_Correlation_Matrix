@@ -31,6 +31,12 @@ result = portfo_metrics(
     trading_days=days
     )['Contribution (log)']
 
+result_2 = portfo_metrics(
+    log_return_df, 
+    allocation_df, 
+    trading_days=days
+    )['Contribution']
+
 # expected
 expected_ab  = (np.log(300) - np.log(100)) # average log return of A and B
 expected  = pd.Series({
@@ -40,3 +46,16 @@ expected  = pd.Series({
 
 print(result)
 print(expected)
+
+print(result_2)
+
+print(np.exp(result))
+
+print('-'*50)
+# normal cum contribution cal
+normal = (300-100)/100 * 0.5
+
+log_exp = np.exp((np.log(300) - np.log(100)) * 0.5)
+
+print(normal)
+print(log_exp)

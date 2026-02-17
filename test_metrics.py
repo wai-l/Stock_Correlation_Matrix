@@ -689,44 +689,46 @@ def test_profo_metrics_contribution_log():
 2.8. Values - Contribution
 '''
 
-def test_profo_metrics_contribution():
-    pass
-    # need fixing
+# def test_profo_metrics_contribution():
+#     pass
+#     # need fixing
 
-    days = 252
+#     days = 252
 
-    # result
+#     # result
 
-    ## actual price
-    portfo_return = {
-        "Date": ["2024-01-01", "2024-01-02", "2024-01-03"],
-        "A": [100, 200, 300],
-        "B": [100, 200, 300]
-    }
+#     ## actual price
+#     portfo_return = {
+#         "Date": ["2024-01-01", "2024-01-02", "2024-01-03"],
+#         "A": [100, 200, 300],
+#         "B": [100, 200, 300]
+#     }
 
-    portfo_return_df = pd.DataFrame(portfo_return)
+#     portfo_return_df = pd.DataFrame(portfo_return)
 
-    allocation_df = pd.DataFrame({
-        "Tickers": ["A", "B"],
-        "Allocation Percentage": [50, 50],
-    })
+#     allocation_df = pd.DataFrame({
+#         "Tickers": ["A", "B"],
+#         "Allocation Percentage": [50, 50],
+#     })
 
-    ## log return
-    log_return_df = log_return(portfo_return_df, 'Date')
+#     ## log return
+#     log_return_df = log_return(portfo_return_df, 'Date')
 
-    result = portfo_metrics(
-        log_return_df, 
-        allocation_df, 
-        trading_days=days
-        )['Contribution']
+#     result = portfo_metrics(
+#         log_return_df, 
+#         allocation_df, 
+#         trading_days=days
+#         )['Contribution']
 
-    # expected
-    expected_ab  = (600-200)/200
-    expected  = pd.Series({
-        'A': expected_ab * 0.5,
-        'B': expected_ab * 0.5
-        })
+#     # expected
+#     expected_ab  = (600-200)/200
+#     expected  = pd.Series({
+#         'A': expected_ab * 0.5,
+#         'B': expected_ab * 0.5
+#         })
 
-    pd.testing.assert_series_equal(left = result, right = expected)
+#     pd.testing.assert_series_equal(left = result, right = expected)
 
-
+'''
+2.xxxxxx. test relationship between metrics (e.g. contribution log vs cum return log)
+'''

@@ -176,7 +176,7 @@ with portfo_summary:
         'Cumulative Return', 
         f"{portfo_m['Cumulative Return']:.2%}")
     col3.metric(
-        'Cmumlative Return (Log)', 
+        'Cumulative Return (Log)', 
         f"{portfo_m['Cumulative Return (Log)']:.2%}")
 
         # "Contribution (log)": cumulative_contrib_log,
@@ -236,24 +236,19 @@ with asset_contrib:
     contri_1 = pd.DataFrame(portfo_m['Contribution (log)']).reset_index()
     contri_1.columns = ['Ticker', 'Contribution (log)']
 
-    contri_2 = pd.DataFrame(portfo_m['Contribution']).reset_index()
-    contri_2.columns = ['Ticker', 'Contribution']
-
-    contri_3 = pd.DataFrame(portfo_m['Contribution Share']).reset_index()
-    contri_3.columns = ['Ticker', 'Contribution Share']
+    contri_2 = pd.DataFrame(portfo_m['Contribution Share']).reset_index()
+    contri_2.columns = ['Ticker', 'Contribution Share']
 
     contri_df = (
         contri_1
         .merge(contri_2, on='Ticker')
-        .merge(contri_3, on='Ticker')
     )
 
     totals = pd.DataFrame(
         {
             "Ticker": ["Total"],
             "Contribution (log)": [contri_df["Contribution (log)"].sum()],
-            "Contribution": [np.nan],  # intentionally blank
-            "Contribution Share": [contri_df["Contribution Share"].sum()],
+            "Contribution Share": [contri_df["Contribution Share"].sum()]
         }
     )
 
