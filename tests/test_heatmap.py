@@ -1,4 +1,4 @@
-from heatmap import heatmap
+from app_lib.heatmap import heatmap
 import pandas as pd
 
 def test_heatmap():

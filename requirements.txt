@@ -1,9 +1,8 @@
-datetime
 pandas
 streamlit
 altair
-streamlit_tags
 openpyxl
 yfinance
-matplotlib
 numpy
+pytest
+matplotlib

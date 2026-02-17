@@ -21,8 +21,8 @@ def ticker_closed_price(tickers, start_date, end_date):
     if start_date >= end_date:
         raise ValueError("Start date must be before end date. ")
 
-    if len(tickers) < 2:
-        raise ValueError("Please input two or more tickers. ")
+    # if len(tickers) < 2:
+    #     raise ValueError("Please input two or more tickers. ")
 
     try:
         for i in range(len(tickers)):
