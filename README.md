@@ -121,11 +121,11 @@ Download section:
   Streamlit display helpers (for example, total-row highlighting).
 
 ### Tests
-- `test_stock_api.py`
-- `test_data_transform.py`
-- `test_metrics.py`
-- `test_corr_matrix.py`
-- `test_heatmap.py`
+- `tests/test_stock_api.py`
+- `tests/test_data_transform.py`
+- `tests/test_metrics.py`
+- `tests/test_corr_matrix.py`
+- `tests/test_heatmap.py`
 
 ---
 
