@@ -1,6 +1,6 @@
 pandas
-streamlit
-altair
+streamlit>=1.31,<2
+altair>=6,<7
 openpyxl
 yfinance
 numpy
