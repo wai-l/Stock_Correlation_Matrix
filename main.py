@@ -5,7 +5,7 @@ import numpy as np
 import streamlit as st
 
 # scripts
-from app_lib.stock_api import ticker_closed_price
+from app_lib.stock_api import ticker_closed_price, PriceDownloadError
 from app_lib.corr_matrix import corr_matrix
 from app_lib.heatmap import heatmap
 from app_lib.line_chart import line_chart
@@ -132,18 +132,42 @@ with input_fields:
             st.error(msg)
         st.stop()
 
-with portfo_summary: 
-    # api call and data cleaning
-    closed_price_wide = ticker_closed_price(tickers, start_date, end_date)
+with portfo_summary:
+    try:
+        closed_price_wide, report = ticker_closed_price(tickers, start_date, end_date)
+    except ValueError as e:
+        st.error(str(e))
+        st.stop()
+    except PriceDownloadError as e:
+        st.error(str(e))
+        st.stop()
+
+    # warn but continue if some tickers failed
+    if report["failed"]:
+        msg = "\n".join([f"- {t}: {reason}" for t, reason in report["failed"].items()])
+        st.warning("Some tickers failed to load:\n" + msg)
+
+    # IMPORTANT: use only the tickers that actually loaded
+    tickers_valid = report["valid"]
+    edited_df_valid = edited_df[edited_df["Tickers"].isin(tickers_valid)].copy()
+
+    # renormalize to sum to 100
+    edited_df_valid["Allocation Percentage"] = (
+        edited_df_valid["Allocation Percentage"] / edited_df_valid["Allocation Percentage"].sum() * 100
+    )
+
+    total_allocated_valid = edited_df_valid["Allocation Percentage"].sum()
+
+    
     log_return_df = log_return(closed_price_wide)
-    portfo_m = portfo_metrics(log_return_df, edited_df)
+    portfo_m = portfo_metrics(log_return_df, edited_df_valid)
 
     # portfoliio metrics
     st.header('Portfolio Summary')
 
     col1, col2= st.columns(2)
-    col1.metric('Number of Assets', len(tickers))
-    col2.metric('Total Allocation', f"{total_allocated:.2f}%")
+    col1.metric('Number of Assets', len(tickers_valid))
+    col2.metric('Total Allocation', f"{total_allocated_valid:.2f}%")
 
     st.subheader('Annualised', help='Based on 252 trading days per year. ')
     
@@ -309,7 +333,7 @@ display_data = (
 display_long = (
     pd.melt(display_data,
             id_vars = ["Date"],
-            value_vars = tickers,
+            value_vars = tickers_valid,
             var_name = "Ticker",
             value_name = "Closed_price")
     .sort_values(by="Date", ignore_index = True)
@@ -346,7 +370,7 @@ now = now.strftime("%Y%m%d_%H%M%S")
 
 xlsx_buf = build_portfolio_export(
     para=para_df, 
-    portfolio_allocation=edited_df, 
+    portfolio_allocation=edited_df_valid, 
     portfo_summary=port_metric, 
     asset_metric=metrics_df, 
     asset_contrib=contri_df, 
